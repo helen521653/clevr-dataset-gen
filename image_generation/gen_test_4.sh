@@ -1,0 +1,3 @@
+export BLENDER=/home/lena/blender-2.78b-linux-glibc219-x86_64
+
+$BLENDER/blender --background --python render_images.py -- --num_images 5575 --output_image_dir out_4/images --output_scene_dir out_4 --output_scene_file out_4 --split train --start_idx 25675 --margin 0.5 --min_dist 0.5 --width 256 --height 256 --render_num_samples 128 --camera_jitter 0.0 --key_light_jitter 0.0 --fill_light_jitter 0.0 --back_light_jitter 0.0

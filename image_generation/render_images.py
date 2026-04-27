@@ -177,7 +177,8 @@ def main(args):
     blend_path = None
     if args.save_blendfiles == 1:
       blend_path = blend_template % (i + args.start_idx)
-    num_objects = random.randint(args.min_objects, args.max_objects)
+    num_objects = random.choice([3,5,7])
+    #num_objects = random.randint(args.min_objects, args.max_objects)
     render_scene(args,
       num_objects=num_objects,
       output_index=(i + args.start_idx),
@@ -250,6 +251,10 @@ def render_scene(args,
   bpy.context.scene.cycles.transparent_max_bounces = args.render_max_bounces
   if args.use_gpu == 1:
     bpy.context.scene.cycles.device = 'GPU'
+  
+  #Try to 
+  bpy.context.scene.render.threads_mode = 'FIXED' 
+  bpy.context.scene.render.threads = 8 # 4
 
   # This will give ground-truth information about the scene and its objects
   scene_struct = {

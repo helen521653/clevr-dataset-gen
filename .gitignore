@@ -3,3 +3,11 @@ __pycache__/
 *.swp
 *.pyc
 output/
+image_generation/out_0/
+image_generation/out_1/
+image_generation/out_2/
+image_generation/out_3/
+image_generation/out_4/
+image_generation/out_5/
+image_generation/out_6/
+image_generation/out_7/
