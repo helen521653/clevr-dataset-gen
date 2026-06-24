@@ -177,7 +177,7 @@ def main(args):
     blend_path = None
     if args.save_blendfiles == 1:
       blend_path = blend_template % (i + args.start_idx)
-    num_objects = random.choice([3,5,7])
+    num_objects = random.choice([1,2,3,4,5]) #      <----------------------------------------------NUM_OBJ-----------------------
     #num_objects = random.randint(args.min_objects, args.max_objects)
     render_scene(args,
       num_objects=num_objects,
@@ -331,6 +331,19 @@ def render_scene(args,
     bpy.ops.wm.save_as_mainfile(filepath=output_blendfile)
 
 
+def uniform_union(intervals):
+    """Sample uniformly from a union of intervals."""
+    lengths = [b - a for a, b in intervals]
+    total = sum(lengths)
+    # выбираем интервал пропорционально длине
+    r = random.uniform(0, total)
+    cumulative = 0
+    for (a, b), length in zip(intervals, lengths):
+        cumulative += length
+        if r <= cumulative:
+            return random.uniform(a, b)
+
+
 def add_random_objects(scene_struct, num_objects, args, camera):
   """
   Add random objects to the current blender scene
@@ -346,7 +359,11 @@ def add_random_objects(scene_struct, num_objects, args, camera):
     material_mapping = [(v, k) for k, v in properties['materials'].items()]
     object_mapping = [(v, k) for k, v in properties['shapes'].items()]
     size_mapping = list(properties['sizes'].items())
-
+ 
+  # TRY TO FIX COLOR -------------------------------------------------------------------------------------------------------------------------------
+  #shape_fixed = random.choice(object_mapping)
+  #color_fixed, rgba_fixed = random.choice(list(color_name_to_rgba.items()))
+  # ------------------------------------------------------------------------------------------------------------------------------------------------
   shape_color_combos = None
   if args.shape_color_combos_json is not None:
     with open(args.shape_color_combos_json, 'r') as f:
@@ -356,8 +373,15 @@ def add_random_objects(scene_struct, num_objects, args, camera):
   objects = []
   blender_objects = []
   for i in range(num_objects):
+    #-------------------------------------------------------------------
+    if i == 0:
+        size_name = random.choice(['large', 'medium'])
+    else:
+        size_name = random.choice(['medium', 'small'])
+    r = properties['sizes'][size_name]
+    #----------------------------------------------------------------------------
     # Choose a random size
-    size_name, r = random.choice(size_mapping)
+    # size_name, r = random.choice(size_mapping)
 
     # Try to place the object, ensuring that we don't intersect any existing
     # objects and that we are more than the desired margin away from all existing
@@ -371,8 +395,14 @@ def add_random_objects(scene_struct, num_objects, args, camera):
         for obj in blender_objects:
           utils.delete_object(obj)
         return add_random_objects(scene_struct, num_objects, args, camera)
-      x = random.uniform(-3, 3)
-      y = random.uniform(-3, 3)
+
+      if i==0:
+        x = random.uniform(-1, 1)      #random.uniform(-3, 3) #-3 , 3
+        y = random.uniform(-1, 1)
+        break
+      else:
+        x = uniform_union([(-3, -2.3), (2.3, 3)])       #random.uniform(-3, 3) #-3 , 3
+        y = uniform_union([(-3, -2.3), (2.3, 3)])        #random.uniform(-3, 3) #-3 , 3 
       # Check to make sure the new object is further than min_dist from all
       # other objects, and further than margin along the four cardinal directions
       dists_good = True
@@ -398,7 +428,10 @@ def add_random_objects(scene_struct, num_objects, args, camera):
       if dists_good and margins_good:
         break
 
-    # Choose random color and shape
+    # Choose random color and shape <----------------------------------------------------------COLOR SHAPE
+    # if shape_fixed is not None and shape_color_combos is None:
+    #   obj_name, obj_name_out = shape_fixed
+    #   color_name, rgba = color_fixed,rgba_fixed
     if shape_color_combos is None:
       obj_name, obj_name_out = random.choice(object_mapping)
       color_name, rgba = random.choice(list(color_name_to_rgba.items()))
@@ -420,6 +453,7 @@ def add_random_objects(scene_struct, num_objects, args, camera):
     obj = bpy.context.object
     blender_objects.append(obj)
     positions.append((x, y, r))
+    print("Added figure with x:", x, " y:", y, " r:", r)
 
     # Attach a random material
     mat_name, mat_name_out = random.choice(material_mapping)
@@ -427,6 +461,8 @@ def add_random_objects(scene_struct, num_objects, args, camera):
 
     # Record data about the object in the scene data structure
     pixel_coords = utils.get_camera_coords(camera, obj.location)
+    
+
     objects.append({
       'shape': obj_name_out,
       'size': size_name,
